@@ -17,4 +17,4 @@ RUN go build -o jbactive cmd/main.go
 # 暴露端口
 EXPOSE 10800
 # 启动应用
-CMD ["./svrw","-addr",":10800"]
+CMD ["./jbactive","-addr",":10800"]
