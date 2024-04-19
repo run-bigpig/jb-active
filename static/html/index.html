@@ -12,9 +12,8 @@
 <body>
 <div class="layui-bg-gray" style="padding: 16px;">
     <div class="layui-row layui-col-space15">
-        <div class="layui-col-md6">
+        <div class="layui-col-md12">
             <div class="layui-card">
-                <div class="layui-card-header">配置</div>
                 <div class="layui-card-body">
                     <form class="layui-form">
                         <div class="layui-form-item logo-title">
@@ -34,7 +33,7 @@
                                 <div class="layui-input-block">
                                     <input type="text" name="assigneeName" value="" lay-verify="required"
                                            placeholder="被授权者名称" lay-reqtext="请填写被授权者名称"
-                                           autocomplete="off" class="layui-input" lay-affix="eye">
+                                           autocomplete="off" class="layui-input" lay-affix="clear">
                                 </div>
                             </div>
                             <div class="layui-form-item">
@@ -54,7 +53,7 @@
                             <div class="layui-form-item">
                                 <label class="layui-form-label">过期时间</label>
                                 <div class="layui-input-block">
-                                    <input type="text"  placeholder="过期时间不建议超过2026年" name="expireDate"  lay-verify="required"  lay-reqtext="请填写过期时间" class="layui-input" id="expireDate" placeholder="yyyy-MM-dd">
+                                    <input type="text"  lay-affix="clear"  placeholder="过期时间不建议超过2026年" name="expireDate"  lay-verify="required"  lay-reqtext="请填写过期时间" class="layui-input" id="expireDate" placeholder="yyyy-MM-dd">
                                 </div>
                             </div>
                             <div class="layui-form-item">
@@ -65,31 +64,30 @@
                 </div>
             </div>
         </div>
-        <div class="layui-col-md6">
-            <div class="layui-card">
-                <div class="layui-card-header">结果</div>
-                <div class="layui-card-body">
-                    <div class="layui-card-header">power.conf</div>
-                    <div class="layui-card-body">
-                        <pre class="layui-code powerconf"></pre>
-                    </div>
-                    <div class="layui-card-header">虚拟机属性配置</div>
-                    <div class="layui-card-body">
+    </div>
+</div>
+<script type="text/html" id="result">
+    <div class="layui-card">
+        <div class="layui-card-body">
+            <div class="layui-card-header">power.conf</div>
+            <div class="layui-card-body">
+                <pre class="layui-code powerconf"></pre>
+            </div>
+            <div class="layui-card-header">虚拟机属性配置</div>
+            <div class="layui-card-body">
                         <pre class="layui-code vmoption">
 --add-opens=java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED
 --add-opens=java.base/jdk.internal.org.objectweb.asm.tree=ALL-UNNAMED
 -javaagent: 这里填ja-netfilter.jar的路径
                         </pre>
-                    </div>
-                    <div class="layui-card-header">激活码</div>
-                    <div class="layui-card-body">
-                        <pre class="layui-code license"></pre>
-                    </div>
-                </div>
+            </div>
+            <div class="layui-card-header">激活码</div>
+            <div class="layui-card-body">
+                <pre class="layui-code license"></pre>
             </div>
         </div>
     </div>
-</div>
+</script>
 <script src="/js/layui.js"></script>
 <script>
     //JS
@@ -100,7 +98,7 @@
         var transfer = layui.transfer;
         var form = layui.form;
         var laydate = layui.laydate;
-        var powerconf, vmoption,license;
+        var power;
         var postCommonObj = {
             assigneeEmail: "",
             licenseRestriction: "",
@@ -114,44 +112,10 @@
         laydate.render({
             elem: '#expireDate',
         });
-        powerconf = layui.code({
-            elem: '.powerconf',
-            preview:false,
-            code: '请先进行配置生成',
-            text: {
-                title: 'power.conf',
-                preview: 'power.conf'
-            },
-            wordWrap:false,
-            header:true,
-            theme: 'dark',
-        });
-
-        vmoption = layui.code({
-            elem: '.vmoption',
-            preview:false,
-            text: {
-                title: '虚拟机配置',
-            },
-            header:true,
-            theme: 'dark',
-        });
-
-        license = layui.code({
-            elem: '.license',
-            preview:false,
-            code: '请先进行配置生成',
-            text: {
-                title: 'license',
-            },
-            header:true,
-            theme: 'dark',
-            wordWrap:false,
-        });
 
         let powerUrl = '/conf/power.conf'
         request(powerUrl, "GET", "", function (res) {
-            powerconf.reloadCode({code: res})
+            power = res
         })
 
         let ideUrl = '/json/ide.json'
@@ -182,7 +146,8 @@
                 none: '无数据', // 数据为空时的提示文本
                 searchNone: '无匹配数据' // 搜索无匹配数据时的提示文本
             },
-            height: 250 // 定义高度
+            width: 500, // 定义宽度
+            height: 350 // 定义高度
         });
 
         let pluginUrl = '/json/plugin.json'
@@ -206,13 +171,58 @@
             request(url, "POST", JSON.stringify(postCommonObj), function (res) {
                 if (res.code === 0) {
                     layer.msg('生成成功', {icon: 1});
-                    license.reloadCode({code: res.data.license})
+                    result(res);
                 } else {
                     layer.msg('生成失败', {icon: 2});
                 }
             })
             return false;
         })
+
+        function result(res) {
+            layer.open({
+                type: 1,
+                title: '结果',
+                content: $('#result').html(),
+                offset: 'auto',
+                area: ['800px', '600px'],
+                success: function (layero, index) {
+                    $(layero).children('.layui-layer-content').css('overflow', 'visible');
+                    layui.code({
+                        elem: '.powerconf',
+                        preview:false,
+                        code: power,
+                        text: {
+                            title: 'power.conf',
+                            preview: 'power.conf'
+                        },
+                        wordWrap:false,
+                        header:true,
+                        theme: 'dark',
+                    });
+                    layui.code({
+                        elem: '.vmoption',
+                        preview:false,
+                        text: {
+                            title: '虚拟机配置',
+                        },
+                        header:true,
+                        theme: 'dark',
+                    });
+                    layui.code({
+                        elem: '.license',
+                        preview:false,
+                        code: res.data.license,
+                        text: {
+                            title: 'license',
+                        },
+                        header:true,
+                        theme: 'dark',
+                        wordWrap:false,
+                    });
+                }
+            });
+        }
 
         function request(url, method, data, success, error) {
             $.ajax({
