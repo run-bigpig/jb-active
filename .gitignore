@@ -1,4 +1,4 @@
 .idea
-cert
+./cert
 static/json
 static/conf
