@@ -1,0 +1,10 @@
+.box-container {
+    width: 100%;
+    margin: 21px auto 0;
+}
+
+.logo-title {
+    text-align: center;
+    letter-spacing: 2px;
+    padding: 14px 0;
+}
