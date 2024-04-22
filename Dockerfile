@@ -11,6 +11,8 @@ RUN go mod tidy
 
 RUN go build -o jbactive cmd/main.go
 
+RUN chmod +x jbactive
+
 # 清理编译时生成的临时文件和缓存
 RUN go clean -cache -testcache
 
@@ -22,10 +24,12 @@ FROM alpine:latest AS runtime
 
 WORKDIR /app
 
-# 将编译阶段生成的可执行文件复制到运行时镜像
+# 将编译阶段生成的可执行文件以及静态文件复制到运行时镜像
 COPY --from=builder /app/jbactive .
+COPY --from=builder /app/static static
 
-# 暴露端口
+RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+#暴露接口
 EXPOSE 10800
 
 # 启动应用
