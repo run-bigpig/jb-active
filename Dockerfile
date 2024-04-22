@@ -1,20 +1,34 @@
-# 使用 Go 官方镜像作为基础镜像
-FROM golang:1.22
+# 使用 Go 官方镜像作为编译阶段的基础镜像
+FROM golang:1.22 AS builder
 
-# 设置工作目录
 WORKDIR /app
 
-# 复制项目代码到容器中
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY . .
 
-#修改go mod 代理
 RUN go env -w GO111MODULE=on
 RUN go env -w GOPROXY=https://goproxy.cn,direct
 
-# 编译 Go 项目
 RUN go build -o jbactive cmd/main.go
+
+# 清理编译时生成的临时文件和缓存
+RUN go clean -cache -testcache
+
+# 删除源代码（保留编译后的可执行文件）
+RUN rm -rf cmd internal
+
+# 使用轻量级基础镜像作为运行阶段
+FROM alpine:latest AS runtime
+
+WORKDIR /app
+
+# 将编译阶段生成的可执行文件复制到运行时镜像
+COPY --from=builder /app/jbactive .
 
 # 暴露端口
 EXPOSE 10800
+
 # 启动应用
-CMD ["./jbactive","-addr",":10800"]
+CMD ["./jbactive", "-addr", ":10800"]
